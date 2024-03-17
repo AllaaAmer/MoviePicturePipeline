@@ -1,0 +1,82 @@
+name: movie-picture-frontend
+
+on:
+  workflow_dispatch:
+      
+  pull_request:
+    branches:
+      - main
+
+# Jobs defined in the workflow
+jobs:
+  lint-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js 
+        uses: actions/setup-node@v3
+        with:
+          node-version: latest
+
+      - name: Perform a cache action to restore cache before dependency install
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.npm
+
+      - name: Install dependencies
+        run: cd starter/frontend && npm ci && npm build
+
+      - name: Run the npm run lint command
+        run: cd backstarter/frontend && npm run lint
+        continue-on-error: false
+
+  test-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js 
+        uses: actions/setup-node@v3
+        with:
+          node-version: latest
+
+      - name: Perform a cache action to restore cache before dependency install
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.npm
+
+      - name: Install dependencies
+        run: cd starter/frontend && npm ci && npm build
+
+      - name: Run tests
+        run: cd starter/frontend && npm run test
+        continue-on-error: false
+
+  post-build-actions:
+    needs: [lint-job, test-job]
+    runs-on: ubuntu-latest
+     - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js 
+        uses: actions/setup-node@v3
+        with:
+          node-version: latest
+
+      - name: Perform a cache action to restore cache before dependency install
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.npm
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Run tests
+        run: cd starter/frontend && npm run test
+        continue-on-error: false
