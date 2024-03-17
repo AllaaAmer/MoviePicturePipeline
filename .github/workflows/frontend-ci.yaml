@@ -1,4 +1,4 @@
-name: movie-picture-frontend
+name: movie-picture-frontend-build
 
 on:
   workflow_dispatch:
@@ -27,7 +27,7 @@ jobs:
             ~/.npm
 
       - name: Install dependencies
-        run: cd starter/frontend && npm ci && npm build
+        run: cd starter/frontend && npm ci && npm run build
 
       - name: Run the npm run lint command
         run: cd backstarter/frontend && npm run lint
@@ -51,7 +51,7 @@ jobs:
             ~/.npm
 
       - name: Install dependencies
-        run: cd starter/frontend && npm ci && npm build
+        run: cd starter/frontend && npm ci && npm run build
 
       - name: Run tests
         run: cd starter/frontend && npm run test
