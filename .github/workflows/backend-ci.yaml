@@ -8,20 +8,27 @@ on:
       - main
 
 jobs:
-  lint-job:
+   lint-job:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+      
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        run: cd starter/backend && pip install pipenv
+
+      - name: Perform a cache action to restore cache before dependency install
+        uses: actions/cache@v3
         with:
-          node-version: latest
-          cache: 'pip'
+          path: ~/.local/share/virtualenvs
+          key: deps-python-${{ hashFiles('**/Pipfile.lock') }}
 
       - name: Install dependencies
-        run: cd starter/backend && pipenv install
+        run: cd starter/backend && pipenv install --dev
 
       - name: Python Linter
         run: cd starter/backend && pipenv run lint
