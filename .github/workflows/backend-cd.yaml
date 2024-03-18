@@ -43,10 +43,13 @@ jobs:
           aws-session-token: ${{secrets.AWS_SESSION_TOKEN}}
           aws-region: ${{ env.AWS_REGION }} 
 
-      - name:  Logging into ECR 
-        run:  |
-          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com 
+      #- name:  Logging into ECR 
+       # run:  |
+        #  aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com 
       
+      - name: Logging into  ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
       - name: Build and Pushes the docker image to ECR
         run:  |
           cd starter/backend
@@ -54,6 +57,11 @@ jobs:
           docker tag backend:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/backend:latest
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/backend:latest
 
+      - name: Kubeconfig Auth
+        working-directory: starter/frontend/k8s
+        run: |
+          aws eks update-kubeconfig --name cluster --region us-east-1
+          
       - name: Deploys the application using kubectl to the eks cluster
         run:  |
           cd starter/backend/k8s
