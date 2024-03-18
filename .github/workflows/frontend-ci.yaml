@@ -1,4 +1,4 @@
-name: movie-picture-frontend-build
+name: Frontend Continuous Integration
 
 on:
   workflow_dispatch:

@@ -1,11 +1,67 @@
-name: movie-picture-frontend-delpoy
+name: Frontend Continuous Deployment
 
 on:
   workflow_dispatch:
+      
+  pull_request: # to be changed to push after i finish
+    branches:
+      - main
+env:
+  REACT_APP_MOVIE_API_URL: helloworld!! 
+  AWS_REGION: us-east-1
 
-jobs: 
+jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Set up Node.js 
+        uses: actions/setup-node@v3
+        with:
+          node-version: latest
+
+      - name: Perform a cache action to restore cache before dependency install
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: cd starter/frontend && npm install
+
+      - name: Run the npm run lint command
+        run: cd starter/frontend && npm run lint
+        continue-on-error: true
+
+      - name: Run tests
+        run: cd starter/frontend && npm run test
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }} 
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }} 
+          aws-session-token: ${{secrets.AWS_SESSION_TOKEN}}
+          aws-region: ${{ env.AWS_REGION }} 
+
+      - name:  Logging into ECR 
+        run:  |
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com 
+      
+      - name: Build and Pushes the docker image to ECR
+        run:  |
+          cd starter/frontend 
+          docker build --build-arg=REACT_APP_MOVIE_API_URL=${{ secrets.REACT_APP_MOVIE_API_URL }} --tag=frontend:latest .
+          docker tag frontend:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/frontend:latest
+          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/frontend:latest
+
+      - name: Deploys the application using kubectl to the eks cluster
+        run:  |
+          cd starter/frontend/k8s
+          kustomize edit set image frontend=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/frontend:latest
+          kustomize build | kubectl apply -f -
+       

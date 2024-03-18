@@ -1,4 +1,4 @@
-name: movie-picture-backend-build
+name: Backend Continuous Integration
 
 on:
   workflow_dispatch:
@@ -52,7 +52,6 @@ jobs:
 
       - name: Install dependencies
         run: cd starter/backend && pipenv install --dev
-
 
       - name: Test with pytest
         run: cd starter/backend && pipenv run test
