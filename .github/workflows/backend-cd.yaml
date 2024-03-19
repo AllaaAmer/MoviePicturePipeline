@@ -69,12 +69,6 @@ jobs:
       - name: Set up Python
         run: cd starter/backend && pip install pipenv
 
-      - name: Perform a cache action to restore cache before dependency install
-        uses: actions/cache@v3
-        with:
-          path: ~/.local/share/virtualenvs
-          key: deps-python-${{ hashFiles('**/Pipfile.lock') }}
-
       - name: Install dependencies
         run: cd starter/backend && pipenv install --dev
 
