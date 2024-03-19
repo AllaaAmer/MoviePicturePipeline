@@ -11,7 +11,7 @@ env:
   AWS_REGION: us-east-1
 
 jobs:
-  deploy:
+  lint-job:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -35,10 +35,48 @@ jobs:
 
       - name: Run the npm run lint command
         run: cd starter/frontend && npm run lint
-        continue-on-error: true
+        continue-on-error: false
+
+  test-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js 
+        uses: actions/setup-node@v3
+        with:
+          node-version: latest
+
+      - name: Perform a cache action to restore cache before dependency install
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: cd starter/frontend && npm install
 
       - name: Run tests
         run: cd starter/frontend && npm run test
+        continue-on-error: false
+
+  build-deploy:
+    needs: [lint-job, test-job]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js 
+        uses: actions/setup-node@v3
+        with:
+          node-version: latest
+
+      - name: Install dependencies
+        run: cd starter/frontend && npm install
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3

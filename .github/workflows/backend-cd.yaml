@@ -10,8 +10,11 @@ env:
   AWS_REGION: us-east-1
 
 jobs:
-  deploy:
+  lint-job:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -30,10 +33,50 @@ jobs:
 
       - name: Python Linter
         run: cd starter/backend && pipenv run lint
-        continue-on-error: true
+
+  test-job:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        run: cd starter/backend && pip install pipenv
+
+      - name: Perform a cache action to restore cache before dependency install
+        uses: actions/cache@v3
+        with:
+          path: ~/.local/share/virtualenvs
+          key: deps-python-${{ hashFiles('**/Pipfile.lock') }}
+
+      - name: Install dependencies
+        run: cd starter/backend && pipenv install --dev
 
       - name: Test with pytest
         run: cd starter/backend && pipenv run test
+        continue-on-error: false
+
+  build-deploy:
+    needs: [lint-job, test-job]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        run: cd starter/backend && pip install pipenv
+
+      - name: Perform a cache action to restore cache before dependency install
+        uses: actions/cache@v3
+        with:
+          path: ~/.local/share/virtualenvs
+          key: deps-python-${{ hashFiles('**/Pipfile.lock') }}
+
+      - name: Install dependencies
+        run: cd starter/backend && pipenv install --dev
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v3
